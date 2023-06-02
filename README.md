@@ -1,5 +1,5 @@
 # sql-e-commerce-queries
-**First we create ERD for the e-commerce dataset using MySQL. <b>
+***First we create ERD for the e-commerce dataset using MySQL. <br>**
 The description of the tables is as follows:
 
 cust_dimen: This table contains information about customers. It defines their customer ID, customer name, city, state and the nature of their business.
@@ -11,3 +11,5 @@ orders_dimen: This table contains information about the orders placed by custome
 prod_dimen: This table contains information about the products of a company that are going to be sold to the customers. It includes information about product types and product subcategories. 
 
 Market_fact_full: This table contains the details of each order, the customer who placed the order, the shipping details and the product details. It contains the foreign keys of all four tables described above.
+
+**we fetch some relevant insight usinh SQL**
