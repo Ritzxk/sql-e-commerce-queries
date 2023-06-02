@@ -101,46 +101,66 @@ In this section we will learn about SQL basic statements and operator
 
 -- Print the entire data of all the customers.
 
-
+SELECT * FROM cust_dimen ;
 
 --  List the names of all the customers.
 
-
+SELECT customer_name
+FROM cust_dimen ;
 
 -- Print the name of all customers along with their city and state.
 
-
+SELECT customer_name, city, state
+FROM cust_dimen ;
 
 --  Print the total number of customers.
 
-
+SELECT COUNT(*) AS customer_count
+FROM cust_dimen ;
 
 -- How many customers are from West Bengal?...Alias
 
-
+SELECT COUNT(*)  AS total_customer_from_Bengal 
+FROM cust_dimen
+WHERE state = 'west bengal' ;
 
 -- Print the names of all customers who belong to West Bengal.
 
+select customer_name
+from cust_dimen
+where state = 'West Bengal' ;
 
 -- Operators
 
 -- Print the names of all customers who are either corporate or belong to Mumbai.
-
+select customer_name, customer_segment, city
+from cust_dimen
+where customer_segment = 'corporate' or city = 'mumbai' ;
 
 -- Print the names of all corporate customers from Mumbai.
-
+select customer_name as corporate_from_mumbai, city
+from cust_dimen
+where customer_segment = 'corporate' and city = 'mumbai' ;
 
 -- List the details of all the customers from southern India: namely Tamil Nadu, Karnataka, Telangana and Kerala.
-   
+   select *
+   from cust_dimen
+   where state in ('Tamil nadu','Karnataka','Telangana','Kearala') ;
 
 -- Print the details of all non-small-business customers.
-
+select *
+from cust_dimen
+where customer_segment != 'small business' ;
 
 -- List the order ids of all those orders which caused losses.
-
+select ord_id, profit
+from market_fact_full
+where profit < 0 ;
 
 -- List the orders with '_5' in their order ids and shipping costs between 10 and 15.
-
+select ord_id, shipping_cost
+from market_fact_full
+where ord_id like '%\_5%' and shipping_cost between 10 and 15 ;
 
 /*
  In this section we will be covering about the aggregation and inbuilt function
