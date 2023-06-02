@@ -14,3 +14,4 @@
 **Market_fact_full:** This table contains the details of each order, the customer who placed the order, the shipping details and the product details. It contains the foreign keys of all four tables described above.
 
 **3. we fetch some relevant insight usinh SQL**
+![image](https://github.com/Ritzxk/sql-e-commerce-queries/assets/79622324/35e036f4-48fe-4f44-9b54-ca062255e19d)
