@@ -170,18 +170,31 @@ where ord_id like '%\_5%' and shipping_cost between 10 and 15 ;
 -- Aggregate Functions
 
 -- 1. Find the total number of sales made.
+select count(sales) as total_sales
+from market_fact_full ;
 
 -- 2. What are the total numbers of customers from each city?
-
+select count(cust_id) as number_of_customers,city
+from cust_dimen
+group by city
+order by number_of_customers desc ;
 
 -- 3. Find the number of orders which have been sold at a loss.
-
+select count(ord_id) as loss_order
+from market_fact_full
+where profit < 0 ;
 
 -- 4. Find the total number of customers from Bihar in each segment.
-
+select count(cust_id) as count_bihar, customer_segment
+from cust_dimen
+group by customer_segment
+order by  count_bihar desc;
 
 -- 5. Find the customers who incurred a shipping cost of more than 50.
-
+select cust_id, sum(shipping_cost) as csc
+from market_fact_full
+group by cust_id
+having csc > 50 ;
      
      
      /*
@@ -192,19 +205,32 @@ where ord_id like '%\_5%' and shipping_cost between 10 and 15 ;
      
      
 --  List the customer names in alphabetical order.
-
+select  customer_name as name, cust_id, city
+from cust_dimen
+order by name asc ;
 
 -- Print the three most ordered products.
-
+select prod_id, sum(order_quantity) as orders
+from market_fact_full
+group by prod_id
+order by orders desc limit 3 ;
 
 --  Print the three least ordered products.
-
+select prod_id, sum(order_quantity) as orders
+from market_fact_full
+group by prod_id
+order by orders asc limit 3 ;
 
 --  Arrange the order ids in the order of their recency.
-
+select ord_id, order_date
+from orders_dimen
+order by order_date desc ;
 
 --  Arrange all consumers from Coimbatore in alphabetical order.
-
+select *
+from cust_dimen
+where city = 'coimbatore' and customer_segment = 'consumer'
+order by customer_name ;
      
 /*
 
@@ -213,10 +239,11 @@ where ord_id like '%\_5%' and shipping_cost between 10 and 15 ;
 */
 
 -- Print the customer names in proper case.
-
+/*
 substring ( 'string' , index , lengthOfthesubstring )
-
--- "abcdef".  substring('abcde' , 2 ,  3 ) = 'bcd'
+for example:
+"abcdef".  substring('abcde' , 2 ,  3 ) = 'bcd'
+*/
 
 select Customer_Name, concat(upper(substring(substring_index(lower(customer_name), ' ', 1), 1, 1)),
 	substring(substring_index(lower(customer_name), ' ' , 1), 2, 20), ' ',
@@ -224,18 +251,30 @@ select Customer_Name, concat(upper(substring(substring_index(lower(customer_name
     substring(substring_index(lower(customer_name), ' ', -1), 2, 20)) as Customer_Name_Proper_Case
 from cust_dimen;
 
-
 -- Print the product names in the following format: Category_Subcategory.
-
+select product_category, product_sub_category, concat(product_category, '_' , product_sub_category) as product_name
+from prod_dimen ;
 
 -- In which month were the most orders shipped?
-
+select month(ship_date) as month, count(ship_id) as ship_order
+from shipping_dimen
+group by month
+order by ship_order desc limit 1;
 
 -- Which month and year combination saw the most number of critical orders?
-
+select count(ord_id) as ord_count, month(order_date) as month, year(order_date) as year
+from orders_dimen
+where order_priority='critical' 
+group by month, year
+order by ord_count desc limit 5;
 
 -- Find the most commonly used mode of shipment in 2011.
-
+select ship_mode, count(ship_mode) as ship_count
+from shipping_dimen
+where year(ship_date) = '2011'
+group by ship_mode
+order by ship_count desc 
+limit 1;
 
 
 /*
@@ -243,53 +282,156 @@ In this section we will be covering the different types of nested queries.
 */
 
 -- 1. Print the order number of the most valuable order by sales.
-
+select ord_id,round(sales,2) as max_sales
+from market_fact_full
+where sales = (select max(sales)
+				from market_fact_full
+                );
+-- this query give most valuable order number
+select ord_id, order_number as most_valuable_order_no
+from orders_dimen
+where ord_id = (
+				select ord_id
+                from market_fact_full
+                order by sales desc limit 1);
 
 -- 2. Print the name of the most frequent customer.
-
+select cust_id, customer_name
+from cust_dimen
+where cust_id = (
+					select cust_id
+                    from market_fact_full
+                    group by cust_id
+                    order by count(cust_id) desc
+                    limit 1 
+                    ) ;
 
 -- 3. Print the three most common products.
-
+select *
+from prod_dimen
+where prod_id in (select prod_id
+					from market_fact_full
+                    group by prod_id
+                    order by count(prod_id) desc ) 
+                    limit 3;
 
 -- -----------------------------------------------------------------------------------------------------------------
 -- Views
 
 -- 1. Create a view to display the sales amounts, the number of orders, profits made and the shipping costs of all
 -- orders. Query it to return all orders which have a profit of greater than 1000.
+create  view order_info as
+select ord_id, sales, order_quantity, profit, shipping_cost
+from market_fact_full ;
+
+select *
+from order_info
+where profit > 1000 ;
 
 
 -- 2. Which year generated the highest profit?
-
+select year(order_date)
+from orders_dimen
+where ord_id = (
+			select ord_id
+            from order_info
+            order by profit desc limit 1) ;
 
 
 -- JOINS
 
 -- 1. Print the product categories and subcategories along with the profits made for each order.
-
+select ord_id, product_category, product_sub_category, profit
+from prod_dimen p
+inner join  market_fact_full m
+on p.prod_id = m.prod_id ;
 
 -- 2. Find the shipment date, mode and profit made for every single order.
-
+select ord_id, ship_mode, ship_date, profit
+from shipping_dimen s
+inner join market_fact_full m
+on s.ship_id = m.ship_id ;
 
 -- 3. Print the shipment mode, profit made and product category for each product.
+select ship_mode, profit, product_category
+from shipping_dimen s
+inner join market_fact_full m
+using(ship_id)
+inner join prod_dimen
+using(prod_id) ;
 
 
 -- 4. Which customer ordered the most number of products?
+select customer_name, sum(order_quantity) as total_order  
+from cust_dimen c
+right join market_fact_full m 
+on c.cust_id = m.cust_id
+group by customer_name
+order by total_order desc ;
 
+-- customer names who doesnot order anythng
+select customer_name, sum(order_quantity) as total
+from cust_dimen c
+left join market_fact_full m 
+using(cust_id)
+group by customer_name
+having total is null ;
 
 -- 5. Selling office supplies was more profitable in Delhi as compared to Patna. True or false?
-
+select city, sum(profit) as city_profit
+from cust_dimen 
+inner join market_fact_full 
+using(cust_id)
+inner join prod_dimen
+using(prod_id)
+where product_category ='office supplies' and city in ('delhi', 'patna')
+group by city
+order by city_profit;
 
 -- 6. Print the three most common products.
+select  product_sub_category, count(prod_id) as count
+from prod_dimen 
+inner join market_fact_full
+using(prod_id)
+group by product_sub_category
+order by count desc limit 3 ;
 
 
 -- 7 . View and joins together : Which year generated the highest profit?
+create view market_fact_orders
+as select *
+			from market_fact_full
+            inner join orders_dimen
+            using(ord_id) ;
+select year(order_date) as year, sum(profit) as profit
+from market_fact_orders
+group by year 
+order by profit desc limit 1;
 
 
 -- Outer Join
 -- 1. Return the order ids which are present in the market facts table.
+select ord_id
+from orders_dimen 
+right join  market_fact_full
+using(ord_id)
+order by ord_id ;
 
 -- UNION
 -- 1. Combine the order numbers for orders and order ids for all shipments in a single column.
-
+select order_number
+from orders_dimen
+union all
+select order_number
+from shipping_dimen ;
 
 -- 2. What are the two most and the two least profitable products?
+(select prod_id, sum(profit) as profit
+from market_fact_full
+group by prod_id
+order by profit desc limit 2)
+union
+(select prod_id, sum(profit) as profit
+from market_fact_full
+group by prod_id
+order by profit asc limit 2);
